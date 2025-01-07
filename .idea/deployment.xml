@@ -1,6 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
-  <component name="PublishConfigData" serverName="chaotix-nas" remoteFilesAllowedToDisappearOnAutoupload="false">
+  <component name="PublishConfigData" autoUpload="Always" serverName="chaotix-nas" createEmptyFolders="true" exclude=".svn;.cvs;.idea;.DS_Store;.hg;*.hprof;*.pyc" confirmBeforeUploading="false" confirmBeforeDeletion="false" autoUploadExternalChanges="true">
+    <option name="confirmBeforeDeletion" value="false" />
+    <option name="confirmBeforeUploading" value="false" />
     <serverData>
       <paths name="chaotix-nas">
         <serverdata>
@@ -10,5 +12,6 @@
         </serverdata>
       </paths>
     </serverData>
+    <option name="myAutoUpload" value="ALWAYS" />
   </component>
 </project>
