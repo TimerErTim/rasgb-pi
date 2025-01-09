@@ -1,6 +1,8 @@
 pub mod fake;
 pub mod pixels;
 
+use crate::frame::gen::FrameGenerator;
+use crate::frame::Frame;
 use thiserror::Error;
 
 #[derive(Clone, PartialEq, Eq)]
@@ -19,6 +21,16 @@ pub trait Display {
     fn dimensions(&self) -> Dimensions;
 
     fn update_pixels(&self, pixels: Vec<Pixel>) -> Result<(), DisplayError>;
+}
+
+impl<T: Display + ?Sized> Display for Box<T> {
+    fn dimensions(&self) -> Dimensions {
+        (**self).dimensions()
+    }
+
+    fn update_pixels(&self, pixels: Vec<Pixel>) -> Result<(), DisplayError> {
+        (**self).update_pixels(pixels)
+    }
 }
 
 #[derive(Error, Debug)]
