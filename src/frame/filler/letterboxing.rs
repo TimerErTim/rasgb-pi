@@ -14,7 +14,7 @@ impl LetterboxingDisplayFiller {
 }
 
 impl FrameFiller for LetterboxingDisplayFiller {
-    fn push_to_display(&self, frame: Frame, display: &impl Display) -> Result<(), DisplayError> {
+    fn push_to_display(&self, frame: Frame, display: &dyn Display) -> Result<(), DisplayError> {
         let dimensions = display.dimensions();
         if frame.width > dimensions.width || frame.height > dimensions.height {
             return Err(DisplayError::FrameTooLarge);

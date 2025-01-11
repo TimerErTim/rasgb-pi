@@ -1,6 +1,7 @@
 use crate::display::pixels::drawer::Drawer;
 use crate::display::{Dimensions, Display, DisplayError, Pixel};
 use std::sync::Arc;
+use tokio_util::sync::CancellationToken;
 
 mod drawer;
 mod winit;
@@ -9,19 +10,23 @@ pub struct PixelsDisplay {
     width: u32,
     height: u32,
     drawer: Arc<Drawer>,
-    window_thread_handle: std::thread::JoinHandle<()>,
+    close_window_handle: Option<Box<dyn FnOnce() -> ()>>,
+    shutdown_token: CancellationToken,
 }
 
 impl PixelsDisplay {
     pub fn new(width: u32, height: u32) -> Self {
+        let shutdown_token = CancellationToken::new();
         let drawer = Arc::new(Drawer::new());
-        let window_thread_handle = winit::create_pixels_window(width, height, Arc::clone(&drawer));
+        let close_window_handle =
+            winit::create_pixels_window(width, height, Arc::clone(&drawer), shutdown_token.clone());
 
         Self {
             width,
             height,
             drawer,
-            window_thread_handle,
+            close_window_handle: Some(Box::new(close_window_handle)),
+            shutdown_token,
         }
     }
 }
@@ -42,5 +47,11 @@ impl Display for PixelsDisplay {
         self.drawer.set_data(pixels);
 
         Ok(())
+    }
+}
+
+impl Drop for PixelsDisplay {
+    fn drop(&mut self) {
+        self.close_window_handle.take().unwrap()();
     }
 }

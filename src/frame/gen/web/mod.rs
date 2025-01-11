@@ -4,6 +4,7 @@ use crate::frame::Frame;
 use crate::web;
 use crate::web::{WebServerConfig, WebServerControl};
 use std::sync::Arc;
+use tokio::runtime::Handle;
 use tokio::task;
 
 #[derive(Clone)]
@@ -16,6 +17,7 @@ pub struct WebQueriedFrameGeneratorConfig {
 pub struct WebQueriedFrameGenerator {
     config: WebQueriedFrameGeneratorConfig,
     time_queued_frame_generator: Arc<TimeQueuedFrameGenerator>,
+    server_join_handles: Vec<task::JoinHandle<()>>,
 }
 
 impl WebQueriedFrameGenerator {
@@ -25,10 +27,11 @@ impl WebQueriedFrameGenerator {
         Self {
             config,
             time_queued_frame_generator: Arc::new(generator),
+            server_join_handles: vec![],
         }
     }
 
-    pub fn start_server(&self, config: WebServerConfig) {
+    pub fn start_server(&mut self, config: WebServerConfig) {
         let framed_generator = Arc::clone(&self.time_queued_frame_generator);
         let gen_config = self.config.clone();
         let server_control = WebServerControl {
@@ -47,14 +50,28 @@ impl WebQueriedFrameGenerator {
             }),
         };
 
-        task::spawn(async move {
+        let handle = task::spawn(async move {
             web::run_server(config, server_control).await;
         });
+        self.server_join_handles.push(handle);
     }
 }
 
 impl FrameGenerator for WebQueriedFrameGenerator {
     fn generate(&self, unix_micros: u128) -> Option<Frame> {
         self.time_queued_frame_generator.generate(unix_micros)
+    }
+}
+
+impl Drop for WebQueriedFrameGenerator {
+    fn drop(&mut self) {
+        task::block_in_place(|| {
+            let runtime = Handle::current();
+            for handle in self.server_join_handles.drain(..) {
+                runtime.block_on(async {
+                    handle.await;
+                })
+            }
+        })
     }
 }

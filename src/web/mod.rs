@@ -36,5 +36,8 @@ pub async fn run_server(mut config: WebServerConfig, control: WebServerControl) 
     } else {
         server_future.await
     };
-    server_result.inspect_err(|err| eprintln!("server error: {}", err));
+    match server_result {
+        Ok(()) => eprintln!("server shutdown {}", context.config.socket),
+        Err(e) => eprintln!("server error: {}", e),
+    };
 }

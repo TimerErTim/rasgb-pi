@@ -1,18 +1,9 @@
-use crate::context::RasGBContext;
-use crate::display::fake::FakeDisplay;
-use crate::display::pixels::PixelsDisplay;
-use crate::display::{Display, Pixel};
-use crate::frame::filler::letterboxing::LetterboxingDisplayFiller;
+use crate::config::read_config_from_env;
+use crate::display::Display;
 use crate::frame::filler::FrameFiller;
-use crate::frame::gen::fallback::FallbackFrameGenerator;
-use crate::frame::gen::solid_color::SolidColorFrameGenerator;
-use crate::frame::gen::time_queried::TimeQueuedFrameGenerator;
-use crate::frame::Frame;
 use crate::run::run;
 use crate::shutdown::shutdown;
 use crate::startup::startup;
-use std::sync::Arc;
-use std::time::{Duration, SystemTime};
 
 mod config;
 mod context;
@@ -25,7 +16,8 @@ mod web;
 
 #[tokio::main]
 async fn main() {
-    let context = startup().await;
+    let config = read_config_from_env().unwrap();
+    let context = startup(config).await;
     let _ = run(&context).await;
     shutdown(context).await;
 }
