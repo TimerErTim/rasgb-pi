@@ -66,5 +66,6 @@ pub enum DisplayConfigDriver {
         pwm_lsb_nanoseconds: Option<u32>,
 
         gpio_slowdown: Option<u32>,
+        show_refresh_rate: Option<bool>,
     },
 }

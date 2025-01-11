@@ -86,6 +86,7 @@ impl DisplayConfigDriver {
                 pwm_lsb_nanoseconds,
 
                 gpio_slowdown,
+                show_refresh_rate,
             } => {
                 #[cfg(not(feature = "rpi"))]
                 {
@@ -104,6 +105,7 @@ impl DisplayConfigDriver {
 
                     runtime_options.set_daemon(false);
                     runtime_options.set_drop_privileges(false);
+                    matrix_options.set_refresh_rate(false);
 
                     matrix_options.set_cols(*panel_columns);
                     matrix_options.set_rows(*panel_rows);
@@ -152,8 +154,9 @@ impl DisplayConfigDriver {
                     if let Some(gpio_slowdown) = gpio_slowdown {
                         runtime_options.set_gpio_slowdown(*gpio_slowdown);
                     }
-
-                    dbg!(&matrix_options, &runtime_options);
+                    if let Some(refresh_rate) = show_refresh_rate {
+                        matrix_options.set_refresh_rate(*refresh_rate);
+                    }
 
                     Box::new(RgbLedMatrixDisplay::new(
                         Some(matrix_options),
