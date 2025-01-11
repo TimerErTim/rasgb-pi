@@ -102,6 +102,9 @@ impl DisplayConfigDriver {
                     let mut matrix_options = LedMatrixOptions::default();
                     let mut runtime_options = LedRuntimeOptions::default();
 
+                    runtime_options.set_daemon(false);
+                    runtime_options.set_drop_privileges(false);
+
                     matrix_options.set_cols(*panel_columns);
                     matrix_options.set_rows(*panel_rows);
                     if let Some(daisy_chains) = daisy_chains {
