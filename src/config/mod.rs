@@ -14,8 +14,6 @@ pub struct RasGBConfig {
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct DisplayConfig {
-    pub width: u32,
-    pub height: u32,
     pub fps: f64,
     pub driver: DisplayConfigDriver,
 }
@@ -42,11 +40,31 @@ pub struct TimingConfig {
 #[derive(Debug, Serialize, Deserialize)]
 pub enum DisplayConfigDriver {
     #[serde(rename = "winit_pixels")]
-    WinitPixels,
+    WinitPixels { width: u32, height: u32 },
     #[serde(rename = "fake")]
-    Fake,
+    Fake { width: u32, height: u32 },
     #[serde(rename = "ratatui")]
     Ratatui,
     #[serde(rename = "rgb_led_matrix")]
-    RgbLedMatrix { idk_yet: String },
+    RgbLedMatrix {
+        panel_rows: u32,
+        panel_columns: u32,
+        daisy_chains: Option<u32>,
+        parallel_channels: Option<u32>,
+        pixel_mapper_config: Option<String>,
+
+        row_addr_type: Option<u32>,
+        led_rgb_sequence: Option<String>,
+        multiplexing: Option<u32>,
+        panel_type: Option<String>,
+
+        scan_mode: Option<u32>,
+        hardware_pulsing: Option<bool>,
+        limit_refresh: Option<u32>,
+        pwm_bits: Option<u8>,
+        pwm_dither_bits: Option<u32>,
+        pwm_lsb_nanoseconds: Option<u32>,
+
+        gpio_slowdown: Option<u32>,
+    },
 }

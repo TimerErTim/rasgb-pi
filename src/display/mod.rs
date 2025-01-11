@@ -1,5 +1,7 @@
 pub mod fake;
 pub mod pixels;
+#[cfg(feature = "rpi")]
+pub mod rgb_led_matrix;
 
 use crate::frame::gen::FrameGenerator;
 use crate::frame::Frame;
