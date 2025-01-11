@@ -71,7 +71,7 @@ impl DisplayConfigDriver {
                 panel_columns,
                 panel_rows,
                 daisy_chains,
-                parallel_channels,
+                parallel_chains,
                 pixel_mapper_config,
 
                 row_addr_type,
@@ -107,8 +107,8 @@ impl DisplayConfigDriver {
                     if let Some(daisy_chains) = daisy_chains {
                         matrix_options.set_chain_length(*daisy_chains);
                     }
-                    if let Some(parallel_channels) = parallel_channels {
-                        matrix_options.set_parallel(*parallel_channels);
+                    if let Some(parallel_chains) = parallel_chains {
+                        matrix_options.set_parallel(*parallel_chains);
                     }
                     if let Some(pixel_mapper_config) = pixel_mapper_config {
                         matrix_options.set_pixel_mapper_config(pixel_mapper_config.as_str());

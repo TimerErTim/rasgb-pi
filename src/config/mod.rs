@@ -50,7 +50,7 @@ pub enum DisplayConfigDriver {
         panel_rows: u32,
         panel_columns: u32,
         daisy_chains: Option<u32>,
-        parallel_channels: Option<u32>,
+        parallel_chains: Option<u32>,
         pixel_mapper_config: Option<String>,
 
         row_addr_type: Option<u32>,
