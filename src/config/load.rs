@@ -5,7 +5,7 @@ use thiserror::Error;
 
 pub fn read_config_from_env() -> Result<RasGBConfig, ConfigLoadError> {
     let home_dir = fs::canonicalize("~").unwrap_or("~".into());
-    let default_path = home_dir.join(".datadance/config.toml");
+    let default_path = home_dir.join(".rasgb-pi/config.toml");
 
     let mut env_var_set = true;
     let path = match std::env::var("RASGB_PI_CONFIG") {
