@@ -5,7 +5,7 @@ use crate::frame::filler::letterboxing::LetterboxingDisplayFiller;
 use crate::frame::filler::FrameFiller;
 use crate::frame::gen::fallback::FallbackFrameGenerator;
 use crate::frame::gen::solid_color::SolidColorFrameGenerator;
-use crate::frame::gen::time_queried::TimeQueuedFrameGenerator;
+use crate::frame::gen::time_queued::TimeQueuedFrameGenerator;
 use crate::frame::gen::web::{WebQueriedFrameGenerator, WebQueriedFrameGeneratorConfig};
 use crate::frame::gen::FrameGenerator;
 use crate::web::WebServerConfig;

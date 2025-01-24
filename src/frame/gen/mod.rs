@@ -1,6 +1,6 @@
 pub mod fallback;
 pub mod solid_color;
-pub mod time_queried;
+pub mod time_queued;
 pub mod web;
 
 use crate::display::Pixel;

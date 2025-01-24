@@ -1,4 +1,4 @@
-use crate::frame::gen::time_queried::TimeQueuedFrameGenerator;
+use crate::frame::gen::time_queued::TimeQueuedFrameGenerator;
 use crate::frame::gen::FrameGenerator;
 use crate::frame::Frame;
 use crate::web;
