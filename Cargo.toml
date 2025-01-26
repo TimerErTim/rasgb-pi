@@ -7,8 +7,8 @@ edition = "2021"
 anyhow = "1.0.95"
 thiserror = "2.0.9"
 
-pixels = "0.14.0"
-winit = { version = "0.30.8", features = ["x11", "rwh_05"] }
+pixels = { version = "0.14.0", optional = true }
+winit = { version = "0.30.8", features = ["x11", "rwh_05"], optional = true }
 rpi-led-matrix = {version = "0.4.0", optional = true}
 viuer = { version = "0.9.1", optional = true }
 image = { version = "0.25.5", features = ["rayon"], default-features = false, optional = true }
@@ -27,6 +27,7 @@ lto = "fat"
 
 [features]
 default = []
+winit = ["dep:winit", "dep:pixels"]
 rpi = ["dep:rpi-led-matrix"]
 tui = ["dep:viuer", "dep:image"]
 

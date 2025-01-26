@@ -1,7 +1,6 @@
 use crate::config::{DisplayConfigDriver, RasGBConfig};
 use crate::context::RasGBContext;
 use crate::display::fake::FakeDisplay;
-use crate::display::pixels::PixelsDisplay;
 use crate::display::{Display, Pixel};
 use crate::frame::filler::letterboxing::LetterboxingDisplayFiller;
 use crate::frame::gen::fallback::FallbackFrameGenerator;
@@ -10,7 +9,6 @@ use crate::frame::gen::web::{WebQueriedFrameGenerator, WebQueriedFrameGeneratorC
 use crate::web::WebServerConfig;
 use std::future::IntoFuture;
 use std::net::SocketAddr;
-use std::pin::Pin;
 use std::time::Duration;
 use tokio_util::sync::CancellationToken;
 
@@ -59,7 +57,17 @@ impl DisplayConfigDriver {
     pub fn to_display(&self, config: &RasGBConfig) -> Box<dyn Display> {
         match self {
             DisplayConfigDriver::WinitPixels { width, height } => {
-                Box::new(PixelsDisplay::new(*width, *height))
+                #[cfg(not(feature = "winit"))]
+                {
+                    unimplemented!(
+                        "feature `winit` is not enabled but required for display `winit_pixels`"
+                    )
+                }
+                #[cfg(feature = "winit")]
+                {
+                    use crate::display::pixels::PixelsDisplay;
+                    Box::new(PixelsDisplay::new(*width, *height))
+                }
             }
             DisplayConfigDriver::Fake { width, height } => {
                 Box::new(FakeDisplay::new(*width, *height))

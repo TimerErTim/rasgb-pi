@@ -1,4 +1,5 @@
 pub mod fake;
+#[cfg(feature = "winit")]
 pub mod pixels;
 #[cfg(feature = "rpi")]
 pub mod rgb_led_matrix;
@@ -15,6 +16,7 @@ pub struct Pixel {
     pub b: u8,
 }
 
+#[derive(Clone, PartialEq, Eq)]
 pub struct Dimensions {
     pub width: u32,
     pub height: u32,
