@@ -55,7 +55,7 @@ pub async fn startup(config: RasGBConfig) -> RasGBContext {
 
 impl DisplayConfigDriver {
     pub fn to_display(&self, config: &RasGBConfig) -> Box<dyn Display> {
-        match self {
+        match self.clone() {
             DisplayConfigDriver::WinitPixels { width, height } => {
                 #[cfg(not(feature = "winit"))]
                 {
