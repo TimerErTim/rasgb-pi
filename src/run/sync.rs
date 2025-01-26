@@ -1,7 +1,7 @@
 use crate::display::Display;
 use crate::frame::filler::FrameFiller;
 use crate::frame::gen::FrameGenerator;
-use std::time::{Duration, SystemTime};
+use std::time::SystemTime;
 
 pub fn sync_frames(
     display: &impl Display,

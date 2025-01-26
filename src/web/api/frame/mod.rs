@@ -9,7 +9,6 @@ use axum::extract::State;
 use axum::http::StatusCode;
 use axum::Json;
 use base64::engine::{DecodePaddingMode, GeneralPurposeConfig};
-use base64::prelude::BASE64_STANDARD;
 use base64::{alphabet, Engine};
 use std::ops::Deref;
 use std::sync::Arc;

@@ -3,7 +3,6 @@ pub mod solid_color;
 pub mod time_queued;
 pub mod web;
 
-use crate::display::Pixel;
 use crate::frame::Frame;
 
 pub trait FrameGenerator {

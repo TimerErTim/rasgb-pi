@@ -1,4 +1,3 @@
-use crate::display::Pixel;
 use image::DynamicImage;
 use std::sync::mpsc::{RecvTimeoutError, Sender};
 use std::thread::JoinHandle;

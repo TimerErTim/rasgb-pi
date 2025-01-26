@@ -1,6 +1,5 @@
 use crate::frame::gen::FrameGenerator;
 use crate::frame::Frame;
-use pixels::wgpu::BufferSize;
 use std::cmp::Ordering;
 use std::collections::BinaryHeap;
 use std::sync::{Arc, Mutex};

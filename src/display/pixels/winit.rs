@@ -2,12 +2,11 @@ use crate::display::pixels::drawer::Drawer;
 use pixels::wgpu::PresentMode;
 use pixels::{Pixels, SurfaceTexture};
 use std::sync::{Arc, Mutex};
-use std::thread::JoinHandle;
 use tokio_util::sync::CancellationToken;
 use winit::application::ApplicationHandler;
-use winit::dpi::{LogicalSize, PhysicalSize};
-use winit::event::{Event, WindowEvent};
-use winit::event_loop::{ActiveEventLoop, ControlFlow, EventLoop, EventLoopBuilder};
+use winit::dpi::LogicalSize;
+use winit::event::WindowEvent;
+use winit::event_loop::{ActiveEventLoop, ControlFlow, EventLoop};
 use winit::platform::x11::EventLoopBuilderExtX11;
 use winit::window::{Window, WindowId};
 

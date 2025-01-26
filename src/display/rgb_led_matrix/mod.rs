@@ -24,7 +24,7 @@ impl RgbLedMatrixDisplay {
         let (width, height) = matrix.canvas().canvas_size();
 
         let thread_drop_token = drop_token.clone();
-        let (data_sender, data_receiver) = std::sync::mpsc::channel();
+        let (data_sender, data_receiver) = std::sync::mpsc::channel::<Vec<Pixel>>();
         let draw_thread_handle = std::thread::spawn(move || {
             while !thread_drop_token.is_cancelled() {
                 match data_receiver.recv_timeout(Duration::from_millis(250)) {

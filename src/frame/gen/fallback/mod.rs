@@ -1,7 +1,7 @@
 use crate::frame::gen::FrameGenerator;
 use crate::frame::Frame;
 use std::sync::Mutex;
-use std::time::{Duration, Instant};
+use std::time::Duration;
 
 pub struct FallbackFrameGenerator {
     base_generator: Box<dyn FrameGenerator>,

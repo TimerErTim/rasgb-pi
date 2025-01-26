@@ -2,9 +2,7 @@ mod drawer;
 
 use crate::display::tui::drawer::Drawer;
 use crate::display::{Dimensions, Display, DisplayError, Pixel};
-use anyhow::anyhow;
-use image::{ColorType, DynamicImage, GenericImageView};
-use std::thread::JoinHandle;
+use image::{DynamicImage, GenericImageView};
 use tokio_util::sync::CancellationToken;
 
 pub struct TuiDisplay {
