@@ -37,7 +37,7 @@ pub struct TimingConfig {
     pub idle_seconds: Option<f64>,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum DisplayConfigDriver {
     #[serde(rename = "winit_pixels")]
     WinitPixels { width: u32, height: u32 },
