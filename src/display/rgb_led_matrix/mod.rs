@@ -2,6 +2,7 @@ mod drawer;
 
 use crate::display::{Dimensions, Display, DisplayError, Pixel};
 use rpi_led_matrix::{LedColor, LedMatrix, LedMatrixOptions, LedRuntimeOptions};
+use std::thread::JoinHandle;
 use std::time::Duration;
 use tokio_util::sync::CancellationToken;
 
@@ -20,7 +21,7 @@ impl RgbLedMatrixDisplay {
         let drop_token = CancellationToken::new();
 
         let matrix = LedMatrix::new(matrix_options, runtime_options).unwrap();
-        let (width, height) = self.matrix.canvas().canvas_size();
+        let (width, height) = matrix.canvas().canvas_size();
 
         let thread_drop_token = drop_token.clone();
         let (data_sender, data_receiver) = std::sync::mpsc::channel();
@@ -30,8 +31,8 @@ impl RgbLedMatrixDisplay {
                     Ok(pixels) => {
                         let mut canvas = matrix.canvas();
                         for (i, pixel) in pixels.iter().enumerate() {
-                            let x = i % dimensions.width as usize;
-                            let y = i / dimensions.width as usize;
+                            let x = i % width as usize;
+                            let y = i / width as usize;
                             canvas.set(
                                 x as i32,
                                 y as i32,
