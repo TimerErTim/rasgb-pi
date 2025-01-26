@@ -55,8 +55,7 @@ pub async fn startup(config: RasGBConfig) -> RasGBContext {
 
 impl DisplayConfigDriver {
     pub fn to_display(&self, config: &RasGBConfig) -> Box<dyn Display> {
-        let cloned_self = self.clone();
-        match &cloned_self {
+        match self.clone() {
             DisplayConfigDriver::WinitPixels { width, height } => {
                 #[cfg(not(feature = "winit"))]
                 {
@@ -67,11 +66,11 @@ impl DisplayConfigDriver {
                 #[cfg(feature = "winit")]
                 {
                     use crate::display::pixels::PixelsDisplay;
-                    Box::new(PixelsDisplay::new(*width, *height))
+                    Box::new(PixelsDisplay::new(width, height))
                 }
             }
             DisplayConfigDriver::Fake { width, height } => {
-                Box::new(FakeDisplay::new(*width, *height))
+                Box::new(FakeDisplay::new(width, height))
             }
             DisplayConfigDriver::Tui { width, height } => {
                 #[cfg(not(feature = "tui"))]
@@ -81,7 +80,7 @@ impl DisplayConfigDriver {
                 #[cfg(feature = "tui")]
                 {
                     use crate::display::tui::TuiDisplay;
-                    Box::new(TuiDisplay::new(*width, *height))
+                    Box::new(TuiDisplay::new(width, height))
                 }
             }
             DisplayConfigDriver::RgbLedMatrix {
@@ -125,55 +124,55 @@ impl DisplayConfigDriver {
                         runtime_options.set_drop_privileges(false);
                         matrix_options.set_refresh_rate(false);
 
-                        matrix_options.set_cols(*panel_columns);
-                        matrix_options.set_rows(*panel_rows);
+                        matrix_options.set_cols(panel_columns);
+                        matrix_options.set_rows(panel_rows);
                         if let Some(daisy_chains) = daisy_chains {
-                            matrix_options.set_chain_length(*daisy_chains);
+                            matrix_options.set_chain_length(daisy_chains);
                         }
                         if let Some(parallel_chains) = parallel_chains {
-                            matrix_options.set_parallel(*parallel_chains);
+                            matrix_options.set_parallel(parallel_chains);
                         }
                         if let Some(pixel_mapper_config) = pixel_mapper_config {
                             matrix_options.set_pixel_mapper_config(pixel_mapper_config.as_str());
                         }
 
                         if let Some(row_addr_type) = row_addr_type {
-                            matrix_options.set_row_addr_type(*row_addr_type);
+                            matrix_options.set_row_addr_type(row_addr_type);
                         }
                         if let Some(led_rgb_sequence) = led_rgb_sequence {
                             matrix_options.set_led_rgb_sequence(led_rgb_sequence.as_str());
                         }
                         if let Some(multiplexing) = multiplexing {
-                            matrix_options.set_multiplexing(*multiplexing);
+                            matrix_options.set_multiplexing(multiplexing);
                         }
                         if let Some(panel_type) = panel_type {
                             matrix_options.set_panel_type(panel_type.as_str());
                         }
 
                         if let Some(scan_mode) = scan_mode {
-                            matrix_options.set_scan_mode(*scan_mode);
+                            matrix_options.set_scan_mode(scan_mode);
                         }
                         if let Some(hardware_pulsing) = hardware_pulsing {
-                            matrix_options.set_hardware_pulsing(*hardware_pulsing);
+                            matrix_options.set_hardware_pulsing(hardware_pulsing);
                         }
                         if let Some(limit_refresh) = limit_refresh {
-                            matrix_options.set_limit_refresh(*limit_refresh);
+                            matrix_options.set_limit_refresh(limit_refresh);
                         }
                         if let Some(pwm_bits) = pwm_bits {
-                            matrix_options.set_pwm_bits(*pwm_bits).unwrap();
+                            matrix_options.set_pwm_bits(pwm_bits).unwrap();
                         }
                         if let Some(pwm_dither_bits) = pwm_dither_bits {
-                            matrix_options.set_pwm_dither_bits(*pwm_dither_bits);
+                            matrix_options.set_pwm_dither_bits(pwm_dither_bits);
                         }
                         if let Some(pwm_lsb_nanoseconds) = pwm_lsb_nanoseconds {
-                            matrix_options.set_pwm_lsb_nanoseconds(*pwm_lsb_nanoseconds);
+                            matrix_options.set_pwm_lsb_nanoseconds(pwm_lsb_nanoseconds);
                         }
 
                         if let Some(gpio_slowdown) = gpio_slowdown {
-                            runtime_options.set_gpio_slowdown(*gpio_slowdown);
+                            runtime_options.set_gpio_slowdown(gpio_slowdown);
                         }
                         if let Some(refresh_rate) = show_refresh_rate {
-                            matrix_options.set_refresh_rate(*refresh_rate);
+                            matrix_options.set_refresh_rate(refresh_rate);
                         }
 
                         (Some(matrix_options), Some(runtime_options))
