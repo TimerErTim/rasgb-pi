@@ -4,6 +4,7 @@ use crate::display::Pixel;
 use crate::frame::Frame;
 use crate::web::api::error::{ResponseErrorExt, ResponseResult};
 use crate::web::state::WebServerContext;
+use crate::web::FrameReceivedEvent;
 use anyhow::anyhow;
 use axum::extract::State;
 use axum::http::StatusCode;
@@ -41,7 +42,12 @@ pub async fn post_frame(
     )
     .map_err(|err| err.with_code(StatusCode::NOT_ACCEPTABLE))?;
 
-    context.control.on_frame_received.deref()(data.unix_micros, frame)
+    let event = FrameReceivedEvent {
+        channel: data.channel,
+        unix_micros: data.unix_micros,
+        frame,
+    };
+    context.control.on_frame_received.deref()(event)
         .map_err(|err| anyhow!(err).with_code(StatusCode::BAD_REQUEST))?;
 
     Ok(StatusCode::ACCEPTED)

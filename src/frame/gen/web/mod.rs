@@ -1,3 +1,4 @@
+use crate::frame::gen::channel_time_queued::ChannelTimeQueuedFrameGenerator;
 use crate::frame::gen::time_queued::TimeQueuedFrameGenerator;
 use crate::frame::gen::FrameGenerator;
 use crate::frame::Frame;
@@ -16,13 +17,13 @@ pub struct WebQueriedFrameGeneratorConfig {
 
 pub struct WebQueriedFrameGenerator {
     config: WebQueriedFrameGeneratorConfig,
-    time_queued_frame_generator: Arc<TimeQueuedFrameGenerator>,
+    time_queued_frame_generator: Arc<ChannelTimeQueuedFrameGenerator>,
     server_join_handles: Vec<task::JoinHandle<()>>,
 }
 
 impl WebQueriedFrameGenerator {
     pub fn new(config: WebQueriedFrameGeneratorConfig) -> Self {
-        let generator = TimeQueuedFrameGenerator::new(2_500);
+        let generator = ChannelTimeQueuedFrameGenerator::new(2_500, 1.0);
 
         Self {
             config,
@@ -38,14 +39,18 @@ impl WebQueriedFrameGenerator {
             display_width: self.config.display_width,
             display_height: self.config.display_height,
             display_fps: self.config.display_fps,
-            on_frame_received: Box::new(move |unix_micros, frame| {
-                if frame.width > gen_config.display_width
-                    || frame.height > gen_config.display_height
+            on_frame_received: Box::new(move |event| {
+                if event.frame.width > gen_config.display_width
+                    || event.frame.height > gen_config.display_height
                 {
                     return Err("frame too large".to_string());
                 }
 
-                framed_generator.add_frame(unix_micros, frame);
+                framed_generator.add_frame(
+                    event.channel.unwrap_or(0),
+                    event.unix_micros,
+                    event.frame,
+                );
                 Ok(())
             }),
         };

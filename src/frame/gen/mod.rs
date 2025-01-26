@@ -1,3 +1,4 @@
+pub mod channel_time_queued;
 pub mod fallback;
 pub mod solid_color;
 pub mod time_queued;

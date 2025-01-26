@@ -19,7 +19,13 @@ pub struct WebServerControl {
     pub display_width: u32,
     pub display_height: u32,
     pub display_fps: f64,
-    pub on_frame_received: Box<dyn Fn(u128, Frame) -> Result<(), String> + Send + Sync>,
+    pub on_frame_received: Box<dyn Fn(FrameReceivedEvent) -> Result<(), String> + Send + Sync>,
+}
+
+pub struct FrameReceivedEvent {
+    pub channel: Option<u8>,
+    pub unix_micros: u128,
+    pub frame: Frame,
 }
 
 pub async fn run_server(mut config: WebServerConfig, control: WebServerControl) {

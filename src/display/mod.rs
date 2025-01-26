@@ -7,6 +7,7 @@ pub mod rgb_led_matrix;
 pub(crate) mod tui;
 
 use crate::frame::gen::FrameGenerator;
+use std::sync::Arc;
 use thiserror::Error;
 
 #[derive(Clone, PartialEq, Eq)]
@@ -29,6 +30,16 @@ pub trait Display {
 }
 
 impl<T: Display + ?Sized> Display for Box<T> {
+    fn dimensions(&self) -> Dimensions {
+        (**self).dimensions()
+    }
+
+    fn update_pixels(&self, pixels: Vec<Pixel>) -> Result<(), DisplayError> {
+        (**self).update_pixels(pixels)
+    }
+}
+
+impl<T: Display + ?Sized> Display for Arc<T> {
     fn dimensions(&self) -> Dimensions {
         (**self).dimensions()
     }
