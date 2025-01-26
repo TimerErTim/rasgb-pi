@@ -25,13 +25,16 @@ impl RgbLedMatrixDisplay {
         let draw_thread_handle = std::thread::spawn(move || {
             let matrix = LedMatrix::new(matrix_options, runtime_options).unwrap();
             let (width, height) = matrix.canvas().canvas_size();
-            dimension_sender.send(Dimensions { width, height });
+            dimension_sender.send(Dimensions {
+                width: width as u32,
+                height: height as u32,
+            });
             drop(dimension_sender);
 
             while !thread_drop_token.is_cancelled() {
                 match data_receiver.recv_timeout(Duration::from_millis(250)) {
                     Ok(pixels) => {
-                        let mut canvas = thread_matrix.canvas();
+                        let mut canvas = matrix.canvas();
                         for (i, pixel) in pixels.iter().enumerate() {
                             let x = i % width as usize;
                             let y = i / width as usize;
