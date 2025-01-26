@@ -18,13 +18,17 @@ impl RgbLedMatrixDisplay {
         runtime_options: Option<LedRuntimeOptions>,
     ) -> Self {
         let drop_token = CancellationToken::new();
+
+        let matrix = LedMatrix::new(matrix_options, runtime_options).unwrap();
+        let (width, height) = self.matrix.canvas().canvas_size();
+
         let thread_drop_token = drop_token.clone();
         let (data_sender, data_receiver) = std::sync::mpsc::channel();
         let draw_thread_handle = std::thread::spawn(move || {
             while !thread_drop_token.is_cancelled() {
                 match data_receiver.recv_timeout(Duration::from_millis(250)) {
                     Ok(pixels) => {
-                        let mut canvas = self.matrix.canvas();
+                        let mut canvas = matrix.canvas();
                         for (i, pixel) in pixels.iter().enumerate() {
                             let x = i % dimensions.width as usize;
                             let y = i / dimensions.width as usize;
@@ -44,9 +48,6 @@ impl RgbLedMatrixDisplay {
             }
         });
 
-        let matrix = LedMatrix::new(matrix_options, runtime_options).unwrap();
-        let (width, height) = self.matrix.canvas().canvas_size();
-
         Self {
             dimensions: Dimensions {
                 width: width as u32,
@@ -54,6 +55,7 @@ impl RgbLedMatrixDisplay {
             },
             drop_token,
             draw_thread_handle: Some(draw_thread_handle),
+            data_sender,
         }
     }
 }
