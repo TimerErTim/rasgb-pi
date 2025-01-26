@@ -1,6 +1,6 @@
 use crate::display::{Dimensions, Display, DisplayError, Pixel};
 use rpi_led_matrix::{LedColor, LedMatrix, LedMatrixOptions, LedRuntimeOptions};
-use std::sync::mpmc::RecvTimeoutError;
+use std::sync::mpsc::{channel, RecvTimeoutError, Sender};
 use std::thread::JoinHandle;
 use std::time::Duration;
 use tokio_util::sync::CancellationToken;
@@ -8,27 +8,29 @@ use tokio_util::sync::CancellationToken;
 pub struct RgbLedMatrixDisplay {
     dimensions: Dimensions,
     draw_thread_handle: Option<JoinHandle<()>>,
-    data_sender: std::sync::mpsc::Sender<Vec<Pixel>>,
+    data_sender: Sender<Vec<Pixel>>,
     drop_token: CancellationToken,
 }
 
 impl RgbLedMatrixDisplay {
     pub fn from_options_gen(
-        options: impl FnOnce() -> (Option<LedMatrixOptions>, Option<LedRuntimeOptions>),
+        options: impl FnOnce() -> (Option<LedMatrixOptions>, Option<LedRuntimeOptions>) + Send,
     ) -> Self {
         let drop_token = CancellationToken::new();
 
         let thread_drop_token = drop_token.clone();
-        let (data_sender, data_receiver) = std::sync::mpsc::channel::<Vec<Pixel>>();
-        let (dimension_sender, dimension_receiver) = std::sync::mpsc::channel::<Dimensions>();
+        let (data_sender, data_receiver) = channel::<Vec<Pixel>>();
+        let (dimension_sender, dimension_receiver) = channel::<Dimensions>();
         let draw_thread_handle = std::thread::spawn(move || {
             let (matrix_options, runtime_options) = options();
             let matrix = LedMatrix::new(matrix_options, runtime_options).unwrap();
             let (width, height) = matrix.canvas().canvas_size();
-            dimension_sender.send(Dimensions {
-                width: width as u32,
-                height: height as u32,
-            });
+            dimension_sender
+                .send(Dimensions {
+                    width: width as u32,
+                    height: height as u32,
+                })
+                .unwrap();
             drop(dimension_sender);
 
             while !thread_drop_token.is_cancelled() {
