@@ -1,6 +1,6 @@
 use crate::display::{Dimensions, Display, DisplayError, Pixel};
 use rpi_led_matrix::{LedColor, LedMatrix, LedMatrixOptions, LedRuntimeOptions};
-use std::sync::Arc;
+use std::sync::mpmc::RecvTimeoutError;
 use std::thread::JoinHandle;
 use std::time::Duration;
 use tokio_util::sync::CancellationToken;
@@ -13,9 +13,8 @@ pub struct RgbLedMatrixDisplay {
 }
 
 impl RgbLedMatrixDisplay {
-    pub fn new(
-        matrix_options: Option<LedMatrixOptions>,
-        runtime_options: Option<LedRuntimeOptions>,
+    pub fn from_options_gen(
+        options: impl FnOnce() -> (Option<LedMatrixOptions>, Option<LedRuntimeOptions>),
     ) -> Self {
         let drop_token = CancellationToken::new();
 
@@ -23,6 +22,7 @@ impl RgbLedMatrixDisplay {
         let (data_sender, data_receiver) = std::sync::mpsc::channel::<Vec<Pixel>>();
         let (dimension_sender, dimension_receiver) = std::sync::mpsc::channel::<Dimensions>();
         let draw_thread_handle = std::thread::spawn(move || {
+            let (matrix_options, runtime_options) = options();
             let matrix = LedMatrix::new(matrix_options, runtime_options).unwrap();
             let (width, height) = matrix.canvas().canvas_size();
             dimension_sender.send(Dimensions {
@@ -49,7 +49,8 @@ impl RgbLedMatrixDisplay {
                             );
                         }
                     }
-                    Err(std::sync::mpsc::RecvTimeoutError::Disconnected) => break,
+                    Err(RecvTimeoutError::Disconnected) => break,
+                    _ => {}
                 }
             }
         });
