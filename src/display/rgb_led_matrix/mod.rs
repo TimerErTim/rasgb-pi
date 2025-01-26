@@ -14,7 +14,7 @@ pub struct RgbLedMatrixDisplay {
 
 impl RgbLedMatrixDisplay {
     pub fn from_options_gen(
-        options: impl FnOnce() -> (Option<LedMatrixOptions>, Option<LedRuntimeOptions>) + Send,
+        options: impl FnOnce() -> (Option<LedMatrixOptions>, Option<LedRuntimeOptions>) + Send + 'static,
     ) -> Self {
         let drop_token = CancellationToken::new();
 
