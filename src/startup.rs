@@ -64,8 +64,16 @@ impl DisplayConfigDriver {
             DisplayConfigDriver::Fake { width, height } => {
                 Box::new(FakeDisplay::new(*width, *height))
             }
-            DisplayConfigDriver::Ratatui => {
-                unimplemented!()
+            DisplayConfigDriver::Tui { width, height } => {
+                #[cfg(not(feature = "tui"))]
+                {
+                    unimplemented!("feature `tui` is not enabled but required for display `tui`")
+                }
+                #[cfg(feature = "tui")]
+                {
+                    use crate::display::tui::TuiDisplay;
+                    Box::new(TuiDisplay::new(*width, *height))
+                }
             }
             DisplayConfigDriver::RgbLedMatrix {
                 panel_columns,

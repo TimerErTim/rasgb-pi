@@ -43,8 +43,8 @@ pub enum DisplayConfigDriver {
     WinitPixels { width: u32, height: u32 },
     #[serde(rename = "fake")]
     Fake { width: u32, height: u32 },
-    #[serde(rename = "ratatui")]
-    Ratatui,
+    #[serde(rename = "tui")]
+    Tui { width: u32, height: u32 },
     #[serde(rename = "rgb_led_matrix")]
     RgbLedMatrix {
         panel_rows: u32,

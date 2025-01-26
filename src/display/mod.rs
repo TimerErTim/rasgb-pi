@@ -2,9 +2,10 @@ pub mod fake;
 pub mod pixels;
 #[cfg(feature = "rpi")]
 pub mod rgb_led_matrix;
+#[cfg(feature = "tui")]
+pub(crate) mod tui;
 
 use crate::frame::gen::FrameGenerator;
-use crate::frame::Frame;
 use thiserror::Error;
 
 #[derive(Clone, PartialEq, Eq)]
