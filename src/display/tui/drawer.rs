@@ -1,6 +1,6 @@
 use crate::display::Pixel;
 use image::DynamicImage;
-use std::sync::mpsc::Sender;
+use std::sync::mpsc::{RecvTimeoutError, Sender};
 use std::thread::JoinHandle;
 use std::time::Duration;
 use tokio_util::sync::CancellationToken;
@@ -16,16 +16,14 @@ impl Drawer {
 
         let thread_handle = std::thread::spawn(move || {
             while !drop_token.is_cancelled() {
-                match pixels_receiver.try_recv() {
+                match pixels_receiver.recv_timeout(Duration::from_millis(250)) {
                     Ok(ref image) => {
                         let _ = viuer::print(image, &config);
                     }
-                    Err(std::sync::mpsc::TryRecvError::Empty) => {
-                        std::thread::sleep(Duration::from_millis(1));
-                    }
-                    Err(std::sync::mpsc::TryRecvError::Disconnected) => {
+                    Err(RecvTimeoutError::Disconnected) => {
                         break;
                     }
+                    _ => {}
                 }
             }
         });
