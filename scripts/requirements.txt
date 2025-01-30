@@ -3,3 +3,6 @@ opencv-python
 argparse
 asyncio
 alive-progress
+
+zstd
+numpy

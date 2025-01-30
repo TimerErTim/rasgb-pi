@@ -6,6 +6,7 @@ import concurrent.futures
 import json
 import os
 import threading
+import time
 from dataclasses import dataclass
 from typing import Optional, Callable
 
@@ -13,6 +14,7 @@ import cv2
 import httpx
 
 from lib.compression import Compression, ZstdCompression
+from lib.resize import ResizeMethod, ResizeArea
 
 
 class RasgbPiClient:
@@ -75,7 +77,6 @@ class RasgbPiClient:
     def _encode_payload(self, payload: FramePayload | None) -> bytes | None:
         if payload is None:
             return None
-
         assert len(payload.pixels_rgb) == payload.width * payload.height * 3
         encoded_pixels = base64.encodebytes(payload.pixels_rgb).decode('utf-8').replace('\n', '')
         data = {
@@ -99,20 +100,25 @@ class RasgbPiClient:
         self,
         location: FrameLocation,
         frame: cv2.Mat,
-        resize: bool = True,
-        callback: Callable[[DisplayMetadata], None] = None
+        resize_method: Optional[ResizeMethod] = ResizeArea(),
+        map_frame: Callable[[cv2.Mat, DisplayMetadata], cv2.Mat] = None
     ) -> None:
         def convert(metadata: DisplayMetadata) -> FramePayload:
-            if callback is not None:
-                callback(metadata)
-            if resize:
+            if resize_method is not None:
                 scale = min(float(metadata.width) / frame.shape[1], float(metadata.height) / frame.shape[0])
-                resized_frame = cv2.resize(frame, (0, 0), fx=scale, fy=scale, interpolation=cv2.INTER_LANCZOS4)
-                shipped_frame = resized_frame
+                resized_frame = cv2.resize(frame, (0, 0), fx=scale, fy=scale,
+                                           interpolation=resize_method.get_cv2_method())
+                resized_frame = resized_frame
             else:
-                shipped_frame = frame
-            byte_list = shipped_frame.flatten().tolist()
-            return FramePayload(shipped_frame.shape[1], shipped_frame.shape[0], bytes(byte_list))
+                resized_frame = frame
+
+            if map_frame is not None:
+                mapped_frame = map_frame(resized_frame, metadata)
+            else:
+                mapped_frame = resized_frame
+
+            byte_list = mapped_frame.flatten().tolist()
+            return FramePayload(mapped_frame.shape[1], mapped_frame.shape[0], bytes(byte_list))
 
         request = self._send(location, convert)
         asyncio.run_coroutine_threadsafe(
@@ -138,6 +144,8 @@ class RasgbPiClient:
             while not stopped:
                 start_location.unix_micros = next_unix_micros
                 await self._send(start_location, capture_frame)
+                waiting_time = (next_unix_micros - time.time_ns() // 1000) / 1_000_000.0
+                await asyncio.sleep(max(0.0, waiting_time))
 
         asyncio.run_coroutine_threadsafe(
             run_loop(),

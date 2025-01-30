@@ -14,7 +14,7 @@ import httpx
 import zstd
 
 from lib.client import RasgbPiClient, FrameLocation, DisplayMetadata
-from lib.compression import NoCompression
+from lib.compression import NoCompression, ZstdCompression
 
 
 def main():
@@ -24,8 +24,9 @@ def main():
     host = server.rsplit(":", 1)[0]
     port = server.rsplit(":", 1)[1] if len(server.rsplit(":", 1)) == 2 else "8081"
     is_loop = args.loop
+    channel = args.channel
 
-    client = RasgbPiClient(f"http://{host}:{port}", time_buffer_ms=1000, default_compression=NoCompression())
+    client = RasgbPiClient(f"http://{host}:{port}", time_buffer_ms=1000, default_compression=ZstdCompression(level=3), default_channel=channel)
 
     stream_videos_to_server(glob.iglob(video_path, recursive=True), client, is_loop=is_loop)
 
@@ -63,10 +64,11 @@ def stream_videos_to_server(video_files: Iterator[str], client: RasgbPiClient, i
         frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
         frame_time = unix_start + video_i() * 1_000_000 / video.fps
         time.sleep(max(0.0, (frame_time - time.time_ns() // 1000) / 1_000_000.0))
-        def update_fps(metadata: DisplayMetadata):
+        def update_fps(mat, metadata: DisplayMetadata):
             nonlocal display_fps
             display_fps = metadata.fps
-        client.send_mat(FrameLocation(unix_micros=int(frame_time)), frame, callback=update_fps)
+            return mat
+        client.send_mat(FrameLocation(unix_micros=int(frame_time)), frame, map_frame=update_fps)
 
 
 def retrieve_display_stats(peer: str) -> [int, int, float]:
@@ -132,6 +134,7 @@ def parse_args():
     parser.add_argument("file", type=str, help="Path or glob to the video file")
     parser.add_argument("-s", "--peer", type=str, required=True, help="RasGB-Pi server address <host>:<port>")
     parser.add_argument("--loop", action="store_true", help="Loop the sequence")
+    parser.add_argument("-c", "--channel", type=int, help="Channel to send the video to")
 
     args = parser.parse_args()
     return args
