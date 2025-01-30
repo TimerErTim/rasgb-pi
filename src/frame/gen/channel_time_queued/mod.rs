@@ -7,7 +7,7 @@ use std::sync::{Arc, Mutex};
 
 #[derive(PartialEq, Eq)]
 pub struct ChannelTimedFrame {
-    channel: u8,
+    channel: i8,
     unix_micros: u128,
     frame: Frame,
 }
@@ -26,7 +26,7 @@ impl Ord for ChannelTimedFrame {
 
 pub struct ChannelTimeQueuedFrameGenerator {
     frames: Mutex<BTreeSet<ChannelTimedFrame>>,
-    last_frame_meta: Mutex<Option<(u8, u128)>>,
+    last_frame_meta: Mutex<Option<(i8, u128)>>,
     buffer_size: usize,
     idle_seconds: f64,
 }
@@ -43,7 +43,7 @@ impl ChannelTimeQueuedFrameGenerator {
         }
     }
 
-    pub fn add_frame(&self, channel: u8, unix_micros: u128, frame: Frame) {
+    pub fn add_frame(&self, channel: i8, unix_micros: u128, frame: Frame) {
         let mut frames_lock = self.frames.lock().unwrap();
         while frames_lock.len() >= self.buffer_size {
             frames_lock.pop_last();
@@ -62,7 +62,7 @@ impl ChannelTimeQueuedFrameGenerator {
         frames_lock.replace(candidate);
     }
 
-    pub fn is_frame_superseded(&self, channel: u8, unix_micros: u128) -> bool {
+    pub fn is_frame_superseded(&self, channel: i8, unix_micros: u128) -> bool {
         let frames_lock = self.frames.lock().unwrap();
         for frame in frames_lock.iter() {
             if frame.unix_micros > unix_micros {

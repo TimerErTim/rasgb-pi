@@ -2,8 +2,6 @@ use serde::Deserialize;
 
 #[derive(Deserialize)]
 pub struct FrameSubmitData {
-    pub channel: Option<u8>,
-    pub unix_micros: u128,
     pub frame: FrameData,
 }
 

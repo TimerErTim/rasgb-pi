@@ -18,6 +18,7 @@ pub async fn startup(config: RasGBConfig) -> RasGBContext {
     let display: Box<dyn Display> = config.display.driver.to_display(&config);
     let dimensions = display.dimensions();
     let mut web_generator = WebQueriedFrameGenerator::new(WebQueriedFrameGeneratorConfig {
+        channel_idle_seconds: config.timing.idle_seconds.unwrap_or(1.0),
         display_width: dimensions.width,
         display_height: dimensions.height,
         display_fps: config.display.fps,

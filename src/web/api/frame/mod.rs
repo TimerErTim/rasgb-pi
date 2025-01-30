@@ -1,54 +1,49 @@
 mod data;
+mod read;
+mod write;
 
 use crate::display::Pixel;
 use crate::frame::Frame;
 use crate::web::api::error::{ResponseErrorExt, ResponseResult};
+use crate::web::api::frame::read::check_superseded_frame;
+use crate::web::api::frame::write::enqueue_frame;
 use crate::web::state::WebServerContext;
 use crate::web::FrameReceivedEvent;
 use anyhow::anyhow;
-use axum::extract::State;
+use axum::extract::{Path, State};
 use axum::http::StatusCode;
+use axum::response::Response;
 use axum::Json;
-use base64::engine::{DecodePaddingMode, GeneralPurposeConfig};
 use base64::{alphabet, Engine};
 use std::ops::Deref;
 use std::sync::Arc;
 
-pub async fn post_frame(
+pub async fn post_frame_with_channel(
     State(context): State<Arc<WebServerContext>>,
+    Path((unix_micros, channel)): Path<(u128, i8)>,
     Json(data): Json<data::FrameSubmitData>,
 ) -> ResponseResult<StatusCode> {
-    let mut pixel_bytes = Vec::with_capacity((data.frame.width * data.frame.height * 3) as usize);
-    let base64_engine = base64::engine::general_purpose::GeneralPurpose::new(
-        &alphabet::STANDARD,
-        GeneralPurposeConfig::new().with_decode_padding_mode(DecodePaddingMode::Indifferent),
-    );
-    base64_engine
-        .decode_vec(data.frame.pixels_b64, &mut pixel_bytes)
-        .map_err(|err| err.with_code(StatusCode::UNPROCESSABLE_ENTITY))?;
+    enqueue_frame(context, Some(channel), unix_micros, data).await
+}
 
-    let frame = Frame::new(
-        data.frame.width,
-        data.frame.height,
-        pixel_bytes
-            .as_slice()
-            .chunks_exact(3)
-            .map(|chunk| Pixel {
-                r: chunk[0],
-                g: chunk[1],
-                b: chunk[2],
-            })
-            .collect(),
-    )
-    .map_err(|err| err.with_code(StatusCode::NOT_ACCEPTABLE))?;
+pub async fn post_frame(
+    State(context): State<Arc<WebServerContext>>,
+    Path(unix_micros): Path<u128>,
+    Json(data): Json<data::FrameSubmitData>,
+) -> ResponseResult<StatusCode> {
+    enqueue_frame(context, None, unix_micros, data).await
+}
 
-    let event = FrameReceivedEvent {
-        channel: data.channel,
-        unix_micros: data.unix_micros,
-        frame,
-    };
-    context.control.on_frame_received.deref()(event)
-        .map_err(|err| anyhow!(err).with_code(StatusCode::BAD_REQUEST))?;
+pub async fn head_frame_with_channel(
+    State(context): State<Arc<WebServerContext>>,
+    Path((unix_micros, channel)): Path<(u128, i8)>,
+) -> ResponseResult<Response> {
+    check_superseded_frame(context, Some(channel), unix_micros).await
+}
 
-    Ok(StatusCode::ACCEPTED)
+pub async fn head_frame(
+    State(context): State<Arc<WebServerContext>>,
+    Path(unix_micros): Path<u128>,
+) -> ResponseResult<Response> {
+    check_superseded_frame(context, None, unix_micros).await
 }

@@ -10,6 +10,7 @@ use tokio::task;
 
 #[derive(Clone)]
 pub struct WebQueriedFrameGeneratorConfig {
+    pub channel_idle_seconds: f64,
     pub display_width: u32,
     pub display_height: u32,
     pub display_fps: f64,
@@ -23,7 +24,7 @@ pub struct WebQueriedFrameGenerator {
 
 impl WebQueriedFrameGenerator {
     pub fn new(config: WebQueriedFrameGeneratorConfig) -> Self {
-        let generator = ChannelTimeQueuedFrameGenerator::new(2_500, 1.0);
+        let generator = ChannelTimeQueuedFrameGenerator::new(2_500, config.channel_idle_seconds);
 
         Self {
             config,
@@ -33,25 +34,33 @@ impl WebQueriedFrameGenerator {
     }
 
     pub fn start_server(&mut self, config: WebServerConfig) {
-        let framed_generator = Arc::clone(&self.time_queued_frame_generator);
-        let gen_config = self.config.clone();
         let server_control = WebServerControl {
             display_width: self.config.display_width,
             display_height: self.config.display_height,
             display_fps: self.config.display_fps,
-            on_frame_received: Box::new(move |event| {
-                if event.frame.width > gen_config.display_width
-                    || event.frame.height > gen_config.display_height
-                {
-                    return Err("frame too large".to_string());
-                }
+            on_frame_received: Box::new({
+                let framed_generator = Arc::clone(&self.time_queued_frame_generator);
+                let gen_config = self.config.clone();
+                move |event| {
+                    if event.frame.width > gen_config.display_width
+                        || event.frame.height > gen_config.display_height
+                    {
+                        return Err("frame too large".to_string());
+                    }
 
-                framed_generator.add_frame(
-                    event.channel.unwrap_or(0),
-                    event.unix_micros,
-                    event.frame,
-                );
-                Ok(())
+                    framed_generator.add_frame(
+                        event.channel.unwrap_or(0),
+                        event.unix_micros,
+                        event.frame,
+                    );
+                    Ok(())
+                }
+            }),
+            on_frame_superseded_check: Box::new({
+                let frame_gen = Arc::clone(&self.time_queued_frame_generator);
+                move |event| {
+                    frame_gen.is_frame_superseded(event.channel.unwrap_or(0), event.unix_micros)
+                }
             }),
         };
 
