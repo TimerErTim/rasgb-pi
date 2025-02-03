@@ -8,7 +8,7 @@ import cv2
 import numpy as np
 
 from lib.client import RasgbPiClient, FrameLocation, DisplayMetadata, FramePayload
-from lib.compression import ZstdCompression
+from lib.compression import ZstdCompression, parse_compression, NoCompression
 
 
 def main():
@@ -39,74 +39,103 @@ def make_clock_frame(display: DisplayMetadata) -> FramePayload:
     # Convert timestamp to datetime
     timestamp = datetime.datetime.fromtimestamp(time.time() - 1)
 
-    hours = timestamp.hour % 12  # Convert to 12-hour format
-    minutes = timestamp.minute
-    seconds = timestamp.second
-
     # Create a blank white image
     img = np.zeros((display.height, display.width, 3), dtype=np.uint8)
 
-    # Clock properties
-    center = (display.width // 2, display.height // 2)
-    radius = int(min(display.width, display.height) // 2.25)  # Adjust radius to fit inside the image
-    thickness = 2
-
-    # Draw clock circle
-    cv2.circle(img, center, radius, (255, 255, 255), thickness)
-
-    # Draw clock center point
-    cv2.circle(img, center, 4, (255, 255, 255), -1)
-
-    # Draw hour and minute ticks
-    for i in range(60):  # 60 ticks (every minute)
-        angle = math.radians(270 + (i * 6))  # Each tick is 6° apart
-        outer_point = (
-            int(center[0] + radius * math.cos(angle)),
-            int(center[1] + radius * math.sin(angle))
-        )
-        inner_point = (
-            int(center[0] + (radius - (8 if i % 60 == 0 else 15 if i % 5 == 0 else 5)) * math.cos(angle)),  # Longer ticks every 5 mins
-            int(center[1] + (radius - (8 if i % 60 == 0 else 15 if i % 5 == 0 else 5)) * math.sin(angle))
-        )
-        cv2.line(img, outer_point, inner_point, (255, 255, 255), 2 if i % 5 == 0 else 1, lineType=cv2.LINE_8)
-
-    # Add numbers to the clock
-    font = cv2.FONT_HERSHEY_SIMPLEX
-    font_scale = 0.3
-    font_thickness = 1
-    num_offset = int(radius * 0.85)  # Slightly outside the clock face
-
-    for i in range(1, 13):
-        angle = math.radians(270 + (i * 30))  # 30° per number
-        num_x = int(center[0] + num_offset * math.cos(angle)) - int(
-            font_scale * 0.2 * radius)  # Adjust x to center numbers better
-        num_y = int(center[1] + num_offset * math.sin(angle)) + int(
-            font_scale * 0.2 * radius)  # Adjust y to center numbers better
-
-        #cv2.putText(img, str(i), (num_x, num_y), font, font_scale, (255, 255, 255), font_thickness, cv2.FILLED)
-
-    # Compute angles for clock hands
-    second_angle = math.radians(270 + (seconds * 6))  # 6° per second
-    minute_angle = math.radians(270 + ((minutes + seconds / 60.0) * 6))  # 6° per full minute
-    hour_angle = math.radians(270 + (hours * 30 + minutes * 0.5))  # 30° per hour, 0.5° per minute
-
-    # Hand lengths
-    second_length = int(radius * 0.75)
-    minute_length = int(radius * 0.75)
-    hour_length = int(radius * 0.5)
-
-    # Compute hand end points
-    def compute_hand(angle, length):
-        return int(center[0] + length * math.cos(angle)), int(center[1] + length * math.sin(angle))
-
-    # Draw clock hands
-    cv2.line(img, center, compute_hand(hour_angle, hour_length), (255, 255, 255), 6, cv2.LINE_8)  # Hour hand (red)
-    cv2.line(img, center, compute_hand(minute_angle, minute_length), (255, 255, 255), 4, cv2.LINE_8)  # Minute hand (green)
-    cv2.line(img, center, compute_hand(second_angle, second_length), (255, 0, 0), 2, cv2.LINE_8)  # Second hand (blue)
+    draw_clock_to_image(img, timestamp)
 
     byte_list = img.flatten().tolist()
     return FramePayload(img.shape[1], img.shape[0], bytes(byte_list))
 
+def draw_clock_to_image(img: cv2.Mat, timestamp: datetime.datetime):
+    img_height, img_width, _ = img.shape
+
+    hours = timestamp.hour % 12  # Convert to 12-hour format
+    minutes = timestamp.minute
+    seconds = timestamp.second
+
+    day = timestamp.day
+    month = timestamp.strftime("%b").upper()
+    year = timestamp.year
+
+    # Clock properties
+    center = (img_width // 2, img_height // 2)
+    radius = int(min(img_width, img_height) // 2.10)  # Adjust radius to fit inside the image
+
+    # Draw clock circle
+    # cv2.circle(img, center, radius, (255, 255, 255), thickness)
+
+    # Draw clock center point
+    # cv2.circle(img, center, 4, (255, 255, 255), -1)
+
+    # Draw hour and minute ticks
+    for i in range(60):  # 60 ticks (every minute)
+        angle = math.radians(270 + (i * 6))  # Each tick is 6° apart
+        outer_length = radius - 6  # Outer tick length
+        inner_length = radius - 10  # Inner tick length
+        if i % 60 == 0:  # half long tick for 12 hour mark
+            inner_length -= 1
+        elif i % 5 == 0:  # Longer ticks every 5 mins
+            inner_length -= 4
+
+        outer_point = (
+            int(center[0] + outer_length * math.cos(angle)),
+            int(center[1] + outer_length * math.sin(angle))
+        )
+        inner_point = (
+            int(center[0] + inner_length * math.cos(angle)),
+            # Longer ticks every 5 mins
+            int(center[1] + inner_length * math.sin(angle))
+        )
+        cv2.line(img, outer_point, inner_point, (255, 255, 255), 2 if i % 5 == 0 else 1, lineType=cv2.LINE_8)
+
+    # Compute angles for clock hands
+    second_degrees = seconds * 6  # 6° per second
+    minute_degrees = (minutes + seconds / 60.0) * 6  # 6° per full minute
+    hours_degrees = hours * 30 + minutes * 0.5  # 30° per hour, 0.5° per minute
+
+    # Hand radius
+    base_radius = radius - 4
+    hour_thickness = 6
+    hour_radius = base_radius + hour_thickness // 2
+    minute_thickness = 2
+    minute_radius = base_radius + minute_thickness // 2 + 1
+    second_thickness = 1
+    second_radius = base_radius
+
+    # Draw clock hands
+    cv2.ellipse(img, center, (hour_radius, hour_radius), -90, 0, max(hours_degrees, 1), (255, 255, 255), hour_thickness, cv2.FILLED)
+
+    cv2.ellipse(img, center, (minute_radius -1 , minute_radius - 1), -90, 0, minute_degrees, (0, 0, 0), minute_thickness + 3, cv2.FILLED)
+    cv2.ellipse(img, center, (minute_radius, minute_radius), -90, 0, max(minute_degrees, 1), (0, 0, 255), minute_thickness, cv2.FILLED)
+
+    cv2.ellipse(img, center, (second_radius, second_radius), -90, 0, second_degrees, (0, 0, 0), second_thickness + 1, cv2.FILLED)
+    cv2.ellipse(img, center, (second_radius, second_radius), -90, 0, max(second_degrees, 1), (255, 0, 0), second_thickness, cv2.FILLED)
+
+
+    # Draw date
+    font = cv2.FONT_HERSHEY_SIMPLEX
+    font_scale = 0.7
+    font_color = (255, 255, 255)
+    font_thickness = 1
+
+    text = f"{year}"
+    year_size = cv2.getTextSize(text, font, font_scale, font_thickness)[0]
+    year_x = img_width // 2 - year_size[0] // 2
+    year_y = img_height // 2 + year_size[1] // 2
+    cv2.putText(img, text, (year_x, year_y), font, font_scale, font_color, font_thickness)
+
+    text = f"{month:02}"
+    month_size = cv2.getTextSize(text, font, font_scale, font_thickness)[0]
+    month_x = img_width // 2 - month_size[0] // 2
+    month_y = year_y - month_size[1] - 2
+    cv2.putText(img, text, (month_x, month_y), font, font_scale, font_color, font_thickness)
+
+    text = f"{day:02}"
+    day_size = cv2.getTextSize(text, font, font_scale, font_thickness)[0]
+    day_x = img_width // 2 - day_size[0] // 2
+    day_y = month_y - day_size[1] - 2
+    cv2.putText(img, text, (day_x, day_y), font, font_scale, font_color, font_thickness)
 
 def parse_args():
     import argparse
@@ -117,6 +146,9 @@ def parse_args():
         exit_on_error=True
     )
     parser.add_argument("-s", "--peer", type=str, required=True, help="RasGB-Pi server address <host>:<port>")
+    parser.add_argument("-c", "--channel", type=int, help="Channel to send the clock to")
+    parser.add_argument("--compression", type=parse_compression, default=ZstdCompression(level=3),
+                        help="Compression to use for sending pixel data (e.g. 'zstd:3', 'none')")
 
     args = parser.parse_args()
     return args

@@ -37,6 +37,7 @@ class RasgbPiClient:
 
         # Run event loop in separate thread
         def run_event_loop():
+            self.event_loop.set_exception_handler(lambda loop, context: None)
             asyncio.set_event_loop(self.event_loop)
             self.event_loop.run_forever()
 

@@ -1,6 +1,8 @@
 import abc
+import re
 from dataclasses import dataclass
 
+import argparse
 import zstd
 
 
@@ -31,3 +33,20 @@ class NoCompression(Compression):
 
     def http_headers(self) -> dict:
         return {}
+
+def parse_compression(value):
+    """Parse compression argument of format 'algorithm:level' or 'none'."""
+    if value.lower() == "none":
+        return NoCompression()
+
+    match = re.fullmatch(r"([a-zA-Z0-9]+):(\d+)", value)
+    if match is None:
+        raise argparse.ArgumentTypeError(f"Invalid compression format: {value}")
+
+    algo, level = match.groups()
+    level = int(level)
+
+    if algo == "zstd":
+        return ZstdCompression(level)
+
+    raise argparse.ArgumentTypeError(f"Invalid compression format: {value}")
