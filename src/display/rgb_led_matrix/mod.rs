@@ -1,6 +1,7 @@
 use crate::display::{Dimensions, Display, DisplayError, Pixel};
 use crate::lib::BlockingOption;
 use rpi_led_matrix::{LedColor, LedMatrix, LedMatrixOptions, LedRuntimeOptions};
+use std::sync::mpsc::channel;
 use std::thread::JoinHandle;
 use std::time::Duration;
 use tokio_util::sync::CancellationToken;
