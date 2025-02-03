@@ -16,6 +16,8 @@ impl TuiDisplay {
     pub fn new(width: u32, height: u32) -> Self {
         let config = viuer::Config {
             restore_cursor: false,
+            width: Some(width),
+            height: Some(height),
             ..Default::default()
         };
         let drop_token = CancellationToken::new();

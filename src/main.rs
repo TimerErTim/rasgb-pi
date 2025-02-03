@@ -13,6 +13,7 @@ mod run;
 mod shutdown;
 mod startup;
 mod web;
+mod lib;
 
 #[tokio::main]
 async fn main() {

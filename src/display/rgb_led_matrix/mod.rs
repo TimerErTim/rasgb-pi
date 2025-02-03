@@ -1,14 +1,14 @@
 use crate::display::{Dimensions, Display, DisplayError, Pixel};
 use rpi_led_matrix::{LedColor, LedMatrix, LedMatrixOptions, LedRuntimeOptions};
-use std::sync::mpsc::{channel, RecvTimeoutError, Sender};
 use std::thread::JoinHandle;
 use std::time::Duration;
 use tokio_util::sync::CancellationToken;
+use crate::lib::BlockingOption;
 
 pub struct RgbLedMatrixDisplay {
     dimensions: Dimensions,
     draw_thread_handle: Option<JoinHandle<()>>,
-    data_sender: Sender<Vec<Pixel>>,
+    data_sender: BlockingOption<Vec<Pixel>>,
     drop_token: CancellationToken,
 }
 
@@ -19,12 +19,15 @@ impl RgbLedMatrixDisplay {
         let drop_token = CancellationToken::new();
 
         let thread_drop_token = drop_token.clone();
-        let (data_sender, data_receiver) = channel::<Vec<Pixel>>();
         let (dimension_sender, dimension_receiver) = channel::<Dimensions>();
+
+        let pixels_receiver = BlockingOption::<Vec<Pixel>>::new();
+        let pixels_sender = pixels_receiver.clone();
         let draw_thread_handle = std::thread::spawn(move || {
             let (matrix_options, runtime_options) = options();
             let matrix = LedMatrix::new(matrix_options, runtime_options).unwrap();
-            let (width, height) = matrix.canvas().canvas_size();
+            let mut canvas = matrix.offscreen_canvas();
+            let (width, height) = canvas.canvas_size();
             dimension_sender
                 .send(Dimensions {
                     width: width as u32,
@@ -35,8 +38,7 @@ impl RgbLedMatrixDisplay {
 
             while !thread_drop_token.is_cancelled() {
                 match data_receiver.recv_timeout(Duration::from_millis(250)) {
-                    Ok(pixels) => {
-                        let mut canvas = matrix.canvas();
+                    Some(pixels) => {
                         for (i, pixel) in pixels.iter().enumerate() {
                             let x = i % width as usize;
                             let y = i / width as usize;
@@ -50,8 +52,8 @@ impl RgbLedMatrixDisplay {
                                 },
                             );
                         }
+                        canvas = matrix.swap(canvas);
                     }
-                    Err(RecvTimeoutError::Disconnected) => break,
                     _ => {}
                 }
             }
