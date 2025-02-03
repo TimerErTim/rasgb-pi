@@ -1,9 +1,9 @@
 use crate::display::{Dimensions, Display, DisplayError, Pixel};
+use crate::lib::BlockingOption;
 use rpi_led_matrix::{LedColor, LedMatrix, LedMatrixOptions, LedRuntimeOptions};
 use std::thread::JoinHandle;
 use std::time::Duration;
 use tokio_util::sync::CancellationToken;
-use crate::lib::BlockingOption;
 
 pub struct RgbLedMatrixDisplay {
     dimensions: Dimensions,
@@ -37,7 +37,7 @@ impl RgbLedMatrixDisplay {
             drop(dimension_sender);
 
             while !thread_drop_token.is_cancelled() {
-                match data_receiver.recv_timeout(Duration::from_millis(250)) {
+                match pixels_receiver.recv_timeout(Duration::from_millis(250)) {
                     Some(pixels) => {
                         for (i, pixel) in pixels.iter().enumerate() {
                             let x = i % width as usize;
@@ -63,7 +63,7 @@ impl RgbLedMatrixDisplay {
             dimensions: dimension_receiver.recv().unwrap(),
             drop_token,
             draw_thread_handle: Some(draw_thread_handle),
-            data_sender,
+            data_sender: pixels_sender,
         }
     }
 }
