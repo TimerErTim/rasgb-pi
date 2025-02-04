@@ -6,3 +6,5 @@ alive-progress
 
 zstd
 numpy
+pillow
+pyowm

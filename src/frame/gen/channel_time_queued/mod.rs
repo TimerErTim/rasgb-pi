@@ -1,3 +1,6 @@
+#[cfg(test)]
+mod tests;
+
 use crate::frame::gen::FrameGenerator;
 use crate::frame::Frame;
 use std::cmp::Ordering;

@@ -8,6 +8,7 @@ import os
 import threading
 import time
 from dataclasses import dataclass
+from sys import stderr
 from typing import Optional, Callable
 
 import cv2
@@ -37,7 +38,7 @@ class RasgbPiClient:
 
         # Run event loop in separate thread
         def run_event_loop():
-            self.event_loop.set_exception_handler(lambda loop, context: None)
+            self.event_loop.set_exception_handler(lambda loop, context: print(context))
             asyncio.set_event_loop(self.event_loop)
             self.event_loop.run_forever()
 
@@ -63,7 +64,8 @@ class RasgbPiClient:
         )
         body = await self.event_loop.run_in_executor(
             self.blocking_executor,
-            lambda: self._encode_payload(make_payload(metadata))
+            self._encode_payload,
+            make_payload(metadata)
         )
         if body is None:
             return
@@ -136,16 +138,19 @@ class RasgbPiClient:
         stopped = False
         async def run_loop():
             nonlocal stopped
-            next_unix_micros = start_location.unix_micros
+            current_fps = 1.0
             def capture_frame(metadata: DisplayMetadata) -> FramePayload | None:
-                nonlocal next_unix_micros
-                next_unix_micros += 1_000_000 // min(metadata.fps, max_fps or metadata.fps)
+                nonlocal current_fps
+                current_fps = min(metadata.fps, max_fps or metadata.fps)
                 return make_frame(metadata)
 
             while not stopped:
-                start_location.unix_micros = next_unix_micros
-                await self._send(start_location, capture_frame)
-                waiting_time = (next_unix_micros - time.time_ns() // 1000) / 1_000_000.0
+                start_location.unix_micros += int(1_000_000 // current_fps)
+                try:
+                    await self._send(start_location, capture_frame)
+                except Exception as e:
+                    print("Error sending frame:", e, file=stderr)
+                waiting_time = (start_location.unix_micros - time.time_ns() // 1000) / 1_000_000.0
                 await asyncio.sleep(max(0.0, waiting_time))
 
         asyncio.run_coroutine_threadsafe(
