@@ -80,7 +80,7 @@ class WeatherConfig:
                     self._current_observation = new_observation
                 except Exception as e:
                     print(f"Failed to get observation at location '{self.location}': {e}", file=stderr)
-                await asyncio.sleep(15)
+                await asyncio.sleep(60)
 
         asyncio.run_coroutine_threadsafe(
             update_observation(),
@@ -176,7 +176,7 @@ class ClockRenderer:
 
         # Draw date
         font = cv2.FONT_HERSHEY_SIMPLEX
-        font_scale = 0.7
+        font_scale = 0.65
         font_color = (255, 255, 255)
         font_thickness = 1
 
@@ -213,7 +213,7 @@ class ClockRenderer:
 
         # Draw data
         font = cv2.FONT_HERSHEY_SIMPLEX
-        font_scale = 0.4
+        font_scale = 0.35
         font_color = (255, 255, 255)
         font_thickness = 1
 
@@ -225,7 +225,7 @@ class ClockRenderer:
 
 
         pil_image = Image.fromarray(img)
-        font = ImageFont.truetype("Pillow/Tests/fonts/DejaVuSans.ttf", 12)
+        font = ImageFont.truetype("Pillow/Tests/fonts/DejaVuSans.ttf", 11)
         draw = ImageDraw.Draw(pil_image)
 
         # Draw non-ascii text onto image
@@ -234,7 +234,7 @@ class ClockRenderer:
         temp_width = temp_size[2] - temp_size[0]
         temp_height = temp_size[3] - temp_size[1]
         temp_x = img_width // 2
-        temp_y = weather_y + temp_height // 2 + 2
+        temp_y = weather_y + temp_height // 2 + 1
         draw.fontmode = "1"
         draw.text((temp_x, temp_y), text, font=font, fill=font_color, anchor="mt")
 
