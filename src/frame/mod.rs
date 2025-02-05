@@ -34,6 +34,18 @@ impl Frame {
     pub fn pixel_data(&self) -> &Vec<Pixel> {
         &self.pixel_data
     }
+    
+    pub fn empty() -> Self {
+        Self::new(0, 0, Vec::new()).unwrap()
+    }
+    
+    pub fn with_color(width: u32, height: u32, color: Pixel) -> Self {
+        Self {
+            width,
+            height,
+            pixel_data: vec![color; (width * height) as usize],
+        }
+    }
 }
 
 #[derive(Error, Debug)]
