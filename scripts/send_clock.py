@@ -207,9 +207,13 @@ class ClockRenderer:
 
         weather = curr_obsv.weather
         temperature = weather.temperature('celsius')["temp"]
-        weather_status = weather.detailed_status
+        detailed_weather_status = weather.detailed_status
+        weather_status = weather.status
 
         img_height, img_width, _ = img.shape
+
+        # Clock radius
+        radius = int(min(img_width, img_height) // 2.10)
 
         # Draw data
         font = cv2.FONT_HERSHEY_SIMPLEX
@@ -217,10 +221,15 @@ class ClockRenderer:
         font_color = (255, 255, 255)
         font_thickness = 1
 
-        text = weather_status.lower()
+        text = detailed_weather_status.lower()
         weather_size = cv2.getTextSize(text, font, font_scale, font_thickness)[0]
+        distance_from_center = weather_size[1] + 14
+        circle_width = 2 * math.sqrt(radius * radius - distance_from_center * distance_from_center)
+        if weather_size[0] > circle_width - 32:
+            text = weather_status.lower()
+            weather_size = cv2.getTextSize(text, font, font_scale, font_thickness)[0]
         weather_x = img_width // 2 - weather_size[0] // 2
-        weather_y = img_height // 2 + weather_size[1] + 14
+        weather_y = img_height // 2 + distance_from_center
         cv2.putText(img, text, (weather_x, weather_y), font, font_scale, font_color, font_thickness)
 
 
