@@ -1,3 +1,4 @@
 /target
 /local
 /scripts/venv
+__pycache__/
